@@ -137,32 +137,73 @@ const BlogPreview = () => {
           </div>
         </div>
 
-        <div className="bg-white shadow-lg rounded-lg p-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4">{blog.title}</h1>
-            <div className="flex items-center text-sm text-gray-500">
-              <span>Last updated: {new Date(blog.updatedAt).toLocaleDateString()}</span>
-              <span className="mx-2">•</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                blog.published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-              }`}>
-                {blog.published ? 'Published' : 'Draft'}
-              </span>
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          {blog.cover_image && (
+            <div className="w-full h-[300px] overflow-hidden">
+              <img 
+                src={blog.cover_image} 
+                alt={blog.title} 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://placehold.co/1200x300?text=Invalid+Cover+Image';
+                }}
+              />
             </div>
-          </div>
-
-          <div className="prose max-w-none">
-            {blog.content && blog.content.blocks && 
-              blog.content.blocks.map((block: any, index: number) => (
-                <div key={index}>{renderBlock(block)}</div>
-              ))
-            }
-            
-            {(!blog.content || !blog.content.blocks || blog.content.blocks.length === 0) && (
-              <div className="text-center py-12 text-gray-500">
-                <p>This blog has no content yet.</p>
+          )}
+          
+          <div className="p-8">
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2">{blog.title}</h1>
+              {blog.sub_title && <p className="text-xl text-gray-600 mb-4">{blog.sub_title}</p>}
+              
+              <div className="flex items-center mb-4">
+                {blog.author_image && (
+                  <img 
+                    src={blog.author_image} 
+                    alt={blog.author_name} 
+                    className="w-10 h-10 rounded-full mr-3 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://placehold.co/100x100?text=A';
+                    }}
+                  />
+                )}
+                <div>
+                  <p className="font-medium">{blog.author_name}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(blog.updatedAt).toLocaleDateString()} • 
+                    <span className={`ml-1 ${
+                      blog.status === "published" ? 'text-green-600' : 'text-gray-600'
+                    }`}>
+                      {blog.status === "published" ? 'Published' : 'Draft'}
+                    </span>
+                  </p>
+                </div>
               </div>
-            )}
+              
+              {blog.tags && blog.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {blog.tags.map((tag: string) => (
+                    <span key={tag} className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="prose max-w-none">
+              {blog.content && blog.content.blocks && 
+                blog.content.blocks.map((block: any, index: number) => (
+                  <div key={index}>{renderBlock(block)}</div>
+                ))
+              }
+              
+              {(!blog.content || !blog.content.blocks || blog.content.blocks.length === 0) && (
+                <div className="text-center py-12 text-gray-500">
+                  <p>This blog has no content yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

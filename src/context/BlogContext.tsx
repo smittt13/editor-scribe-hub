@@ -4,12 +4,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface Blog {
   id: string;
-  title: string;
+  user_id?: string;
+  author_name: string;
+  author_image?: string;
   slug: string;
+  cover_image?: string;
+  title: string;
+  sub_title?: string;
+  tags: string[];
   content: any; // EditorJS data
+  priority?: number;
+  status: "draft" | "published";
   createdAt: string;
   updatedAt: string;
-  published: boolean;
 }
 
 interface BlogContextType {

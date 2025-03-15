@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Save, Eye, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
 
 const BlogEditor = () => {
   const { id } = useParams();
@@ -17,8 +18,15 @@ const BlogEditor = () => {
   const { getBlog, addBlog, updateBlog } = useBlogContext();
   
   const [title, setTitle] = useState('');
+  const [subTitle, setSubTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [published, setPublished] = useState(false);
+  const [authorName, setAuthorName] = useState('');
+  const [authorImage, setAuthorImage] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [priority, setPriority] = useState<number | undefined>(undefined);
+  const [status, setStatus] = useState<"draft" | "published">("draft");
   const [editorData, setEditorData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -29,8 +37,14 @@ const BlogEditor = () => {
       const blog = getBlog(id);
       if (blog) {
         setTitle(blog.title);
+        setSubTitle(blog.sub_title || '');
         setSlug(blog.slug);
-        setPublished(blog.published);
+        setAuthorName(blog.author_name);
+        setAuthorImage(blog.author_image || '');
+        setCoverImage(blog.cover_image || '');
+        setTags(blog.tags || []);
+        setPriority(blog.priority);
+        setStatus(blog.status);
         setEditorData(blog.content);
       } else {
         toast.error('Blog not found');
@@ -49,7 +63,18 @@ const BlogEditor = () => {
     setEditorData(data);
   };
 
-  const handleSave = (status: boolean = published) => {
+  const handleTagAdd = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleTagRemove = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleSave = (newStatus: "draft" | "published" = status) => {
     if (!title) {
       toast.error('Title is required');
       return;
@@ -60,24 +85,32 @@ const BlogEditor = () => {
       return;
     }
 
+    if (!authorName) {
+      toast.error('Author name is required');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
+      const blogData = {
+        title,
+        sub_title: subTitle,
+        slug,
+        author_name: authorName,
+        author_image: authorImage,
+        cover_image: coverImage,
+        tags,
+        priority: priority !== undefined ? priority : undefined,
+        content: editorData,
+        status: newStatus,
+      };
+
       if (isEditMode && id) {
-        updateBlog(id, {
-          title,
-          slug,
-          content: editorData,
-          published: status,
-        });
+        updateBlog(id, blogData);
         toast.success('Blog updated successfully');
       } else {
-        const newBlog = addBlog({
-          title,
-          slug,
-          content: editorData,
-          published: status,
-        });
+        const newBlog = addBlog(blogData);
         toast.success('Blog created successfully');
         // Navigate to edit mode with the new ID
         navigate(`/blogs/edit/${newBlog.id}`);
@@ -115,32 +148,141 @@ const BlogEditor = () => {
         </h1>
 
         <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter blog title"
-              className="text-xl"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter blog title"
+                className="text-xl"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="subTitle">Subtitle</Label>
+              <Input
+                id="subTitle"
+                value={subTitle}
+                onChange={(e) => setSubTitle(e.target.value)}
+                placeholder="Enter blog subtitle"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="slug">Slug</Label>
+            <Label htmlFor="slug">Slug *</Label>
             <Input
               id="slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="blog-post-slug"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="authorName">Author Name *</Label>
+              <Input
+                id="authorName"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                placeholder="Author name"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="authorImage">Author Image URL</Label>
+              <Input
+                id="authorImage"
+                value={authorImage}
+                onChange={(e) => setAuthorImage(e.target.value)}
+                placeholder="https://example.com/author.jpg"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="coverImage">Cover Image URL</Label>
+            <Input
+              id="coverImage"
+              value={coverImage}
+              onChange={(e) => setCoverImage(e.target.value)}
+              placeholder="https://example.com/cover.jpg"
+            />
+            {coverImage && (
+              <div className="mt-2 w-full max-h-[200px] overflow-hidden rounded-md">
+                <img 
+                  src={coverImage} 
+                  alt="Cover preview" 
+                  className="w-full h-auto object-cover" 
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://placehold.co/600x400?text=Invalid+Image+URL';
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <div className="flex gap-2">
+              <Input
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                placeholder="Add tag and press Enter"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleTagAdd();
+                  }
+                }}
+              />
+              <Button type="button" onClick={handleTagAdd} variant="outline">
+                Add
+              </Button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {tags.map((tag) => (
+                  <div 
+                    key={tag} 
+                    className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full flex items-center gap-1"
+                  >
+                    <span>{tag}</span>
+                    <button 
+                      onClick={() => handleTagRemove(tag)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="priority">Priority</Label>
+            <Input
+              id="priority"
+              type="number"
+              value={priority !== undefined ? priority : ''}
+              onChange={(e) => setPriority(e.target.value ? parseInt(e.target.value) : undefined)}
+              placeholder="Enter priority number (optional)"
             />
           </div>
 
           <div className="flex items-center space-x-2">
             <Switch
               id="published"
-              checked={published}
-              onCheckedChange={setPublished}
+              checked={status === "published"}
+              onCheckedChange={(checked) => setStatus(checked ? "published" : "draft")}
             />
             <Label htmlFor="published">Published</Label>
           </div>
@@ -163,13 +305,13 @@ const BlogEditor = () => {
             </Button>
             <Button
               variant="outline"
-              onClick={() => handleSave(false)}
+              onClick={() => handleSave("draft")}
               disabled={isSaving}
             >
               Save as Draft
             </Button>
             <Button
-              onClick={() => handleSave(true)}
+              onClick={() => handleSave("published")}
               disabled={isSaving}
               className="bg-teal-600 hover:bg-teal-700"
             >

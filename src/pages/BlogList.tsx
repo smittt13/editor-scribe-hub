@@ -33,11 +33,13 @@ const BlogList = () => {
   });
 
   const filteredBlogs = blogs.filter(blog => {
-    const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          blog.author_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (blog.tags && blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     
     if (statusFilter === 'all') return matchesSearch;
-    if (statusFilter === 'published') return matchesSearch && blog.published;
-    if (statusFilter === 'draft') return matchesSearch && !blog.published;
+    if (statusFilter === 'published') return matchesSearch && blog.status === "published";
+    if (statusFilter === 'draft') return matchesSearch && blog.status === "draft";
     
     return matchesSearch;
   });
@@ -71,7 +73,7 @@ const BlogList = () => {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="text"
-            placeholder="Search blogs..."
+            placeholder="Search blogs by title, author, or tags..."
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -97,18 +99,45 @@ const BlogList = () => {
           <ul className="divide-y divide-gray-200">
             {filteredBlogs.map((blog) => (
               <li key={blog.id}>
-                <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{blog.title}</h3>
-                    <div className="mt-1 flex items-center">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        blog.published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {blog.published ? 'Published' : 'Draft'}
-                      </span>
-                      <span className="ml-2 text-sm text-gray-500">
-                        Last updated {new Date(blog.updatedAt).toLocaleDateString()}
-                      </span>
+                <div className="px-4 py-5 sm:px-6 flex justify-between items-start">
+                  <div className="flex gap-4">
+                    {blog.cover_image && (
+                      <div className="h-16 w-24 flex-shrink-0 rounded-md overflow-hidden">
+                        <img 
+                          src={blog.cover_image} 
+                          alt={blog.title} 
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">{blog.title}</h3>
+                      {blog.sub_title && <p className="text-sm text-gray-500">{blog.sub_title}</p>}
+                      <div className="mt-1 flex items-center flex-wrap gap-2">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          blog.status === "published" ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {blog.status === "published" ? 'Published' : 'Draft'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          By {blog.author_name}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          Last updated {new Date(blog.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {blog.tags && blog.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {blog.tags.map(tag => (
+                            <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
