@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { save, eye, ArrowLeft } from 'lucide-react';
+import { Save, Eye, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BlogEditor = () => {
@@ -158,7 +158,7 @@ const BlogEditor = () => {
               onClick={handlePreview}
               disabled={!isEditMode || isSaving}
             >
-              <eye className="mr-2 h-4 w-4" />
+              <Eye className="mr-2 h-4 w-4" />
               Preview
             </Button>
             <Button
