@@ -23,12 +23,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Sidebar */}
         <div className="hidden md:flex md:flex-shrink-0">
           <div className="flex flex-col w-64">
-            <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-sidebar border-r border-border rounded-r-xl shadow-sm">
+            <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-secondary/50 border-r border-border rounded-r-xl shadow-md">
               <div className="flex items-center flex-shrink-0 px-6 mb-10">
-                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">BlogAdmin</h1>
+                <h1 className="text-2xl font-bold text-gradient">BlogAdmin</h1>
               </div>
               <div className="flex flex-col flex-grow px-4 mt-5">
-                <nav className="flex-1 space-y-2 bg-sidebar">
+                <nav className="flex-1 space-y-2">
                   {navigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
@@ -38,14 +38,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         className={cn(
                           "group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200",
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-md"
-                            : "text-sidebar-foreground hover:text-primary hover:bg-sidebar-accent"
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                            : "text-foreground hover:text-primary hover:bg-secondary"
                         )}
                       >
                         <item.icon
                           className={cn(
                             "mr-3 flex-shrink-0 h-5 w-5",
-                            isActive ? "text-primary-foreground" : "text-sidebar-foreground group-hover:text-primary"
+                            isActive ? "text-primary-foreground" : "text-foreground group-hover:text-primary"
                           )}
                           aria-hidden="true"
                         />
@@ -58,16 +58,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="mt-auto pb-6 space-y-2">
                   <Link
                     to="/"
-                    className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-sidebar-foreground hover:text-primary hover:bg-sidebar-accent"
+                    className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-foreground hover:text-primary hover:bg-secondary"
                   >
-                    <Settings className="mr-3 flex-shrink-0 h-5 w-5 text-sidebar-foreground group-hover:text-primary" aria-hidden="true" />
+                    <Settings className="mr-3 flex-shrink-0 h-5 w-5 text-foreground group-hover:text-primary" aria-hidden="true" />
                     Settings
                   </Link>
                   <Link
                     to="/"
-                    className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-sidebar-foreground hover:text-primary hover:bg-sidebar-accent"
+                    className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-foreground hover:text-primary hover:bg-secondary"
                   >
-                    <LogOut className="mr-3 flex-shrink-0 h-5 w-5 text-sidebar-foreground group-hover:text-primary" aria-hidden="true" />
+                    <LogOut className="mr-3 flex-shrink-0 h-5 w-5 text-foreground group-hover:text-primary" aria-hidden="true" />
                     Log Out
                   </Link>
                 </div>
