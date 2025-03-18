@@ -408,5 +408,3 @@ const Settings = () => {
 };
 
 export default Settings;
-export { AutosaveProvider };
-
