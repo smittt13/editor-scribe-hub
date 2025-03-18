@@ -8,6 +8,8 @@ interface User {
   username: string;
   email: string;
   avatar?: string;
+  apiKey?: string;
+  role?: 'admin' | 'user';
 }
 
 interface AuthContextType {
@@ -17,6 +19,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  generateApiKey: () => string;
+  regenerateApiKey: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +46,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setIsLoading(false);
   }, []);
+
+  const generateApiKey = (): string => {
+    // Generate a unique API key
+    const apiKey = crypto.randomUUID();
+    
+    if (user) {
+      const updatedUser = { ...user, apiKey };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update the user in the users array
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const updatedUsers = users.map((u: any) => 
+        u.id === user.id ? { ...u, apiKey } : u
+      );
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      setUser(updatedUser);
+      toast.success("API key generated successfully!");
+      return apiKey;
+    }
+    
+    return '';
+  };
+  
+  const regenerateApiKey = (): string => {
+    return generateApiKey();
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -85,12 +116,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
+      // First user is admin, others are regular users
+      const role = users.length === 0 ? 'admin' : 'user';
+      
       const newUser = {
         id: crypto.randomUUID(),
         username,
         email,
         password, // In a real app, this would be hashed
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
+        role,
+        apiKey: role === 'admin' ? crypto.randomUUID() : undefined
       };
       
       users.push(newUser);
@@ -125,7 +161,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading,
       login, 
       signup, 
-      logout 
+      logout,
+      generateApiKey,
+      regenerateApiKey
     }}>
       {children}
     </AuthContext.Provider>

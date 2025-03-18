@@ -10,10 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Save, Upload, User } from 'lucide-react';
+import { Save, Upload, User, Key, Copy, RefreshCcw } from 'lucide-react';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, generateApiKey, regenerateApiKey } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState(user?.username || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -40,6 +40,24 @@ const Settings = () => {
       .toUpperCase();
   };
 
+  const handleCopyApiKey = () => {
+    if (user?.apiKey) {
+      navigator.clipboard.writeText(user.apiKey);
+      toast.success('API key copied to clipboard');
+    }
+  };
+
+  const handleGenerateApiKey = () => {
+    if (user?.apiKey) {
+      // If key already exists, ask for confirmation before regenerating
+      if (window.confirm('Are you sure you want to regenerate your API key? This will invalidate the existing key.')) {
+        regenerateApiKey();
+      }
+    } else {
+      generateApiKey();
+    }
+  };
+
   return (
     <Layout>
       <div className="flex flex-col gap-8">
@@ -52,6 +70,9 @@ const Settings = () => {
           <TabsList className="mb-6">
             <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="api" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              API Keys
             </TabsTrigger>
             <TabsTrigger value="account" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Account
@@ -109,6 +130,19 @@ const Settings = () => {
                           className="bg-secondary"
                         />
                       </div>
+                      
+                      {user?.role && (
+                        <div className="space-y-2">
+                          <Label>Role</Label>
+                          <div className="bg-secondary rounded-md p-2 flex items-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -121,6 +155,81 @@ const Settings = () => {
                     </Button>
                   </div>
                 </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="api">
+            <Card className="border border-border bg-card shadow-sm card-glow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Key className="mr-2 h-5 w-5 text-primary" />
+                  API Keys Management
+                </CardTitle>
+                <CardDescription>
+                  Generate and manage API keys for accessing your blog content
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="api-key">Your API Key</Label>
+                  <div className="flex items-center space-x-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="api-key"
+                        readOnly
+                        type="text"
+                        value={user?.apiKey || 'No API key generated yet'}
+                        className="pr-10 font-mono text-xs bg-secondary"
+                      />
+                      {user?.apiKey && (
+                        <Button 
+                          type="button" 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute right-1 top-1 h-6 w-6"
+                          onClick={handleCopyApiKey}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button 
+                      type="button" 
+                      onClick={handleGenerateApiKey}
+                      className="bg-primary hover:bg-primary/80"
+                    >
+                      {user?.apiKey ? (
+                        <>
+                          <RefreshCcw className="h-4 w-4 mr-2" />
+                          Regenerate
+                        </>
+                      ) : (
+                        <>
+                          <Key className="h-4 w-4 mr-2" />
+                          Generate Key
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-md bg-secondary p-4 space-y-3">
+                  <h3 className="font-semibold">How to use your API key</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Use your API key to retrieve published blogs from your API endpoint.
+                  </p>
+                  <div className="bg-black/30 p-3 rounded-md overflow-x-auto">
+                    <pre className="text-xs text-gray-300 font-mono">
+{`fetch('https://yourdomain.com/api/blogs?apiKey=${user?.apiKey || 'YOUR_API_KEY'}')
+  .then(response => response.json())
+  .then(data => console.log(data));`}
+                    </pre>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Note:</strong> Keep your API key secure. If you suspect your key has been compromised, regenerate it immediately.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Api from "./pages/Api";
 import React from "react";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,25 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Admin route component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gradient glow-effect">Loading...</h1>
+      </div>
+    </div>;
+  }
+  
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/blogs" replace />;
   }
   
   return <>{children}</>;
@@ -59,6 +79,9 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* API route (public but requires API key) */}
+      <Route path="/api/blogs" element={<Api />} />
+      
       {/* Public routes */}
       <Route path="/login" element={
         <PublicRoute>
