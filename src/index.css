@@ -6,53 +6,45 @@
 @layer base {
   :root {
     --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-
+    --foreground: 214 32% 91%;
+    
     --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
-
+    --card-foreground: 213 31% 91%;
+    
     --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
+    --popover-foreground: 215 20.2% 65.1%;
+    
     --primary: 262 83% 62%;
-    --primary-foreground: 0 0% 100%;
-
+    --primary-foreground: 222 47% 11%;
+    
     --secondary: 222 47% 18%;
     --secondary-foreground: 210 40% 98%;
-
-    --muted: 222 47% 18%;
-    --muted-foreground: 217 33% 70%;
-
-    --accent: 222 47% 18%;
+    
+    --muted: 223 47% 18%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 216 34% 17%;
     --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 50%;
+    
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
+    
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
     --ring: 262 83% 62%;
 
     --radius: 0.75rem;
-
-    --sidebar-background: 222 47% 13%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 262 83% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 262 83% 62%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border selection:bg-primary/10 selection:text-primary;
   }
-
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
 }
 
@@ -65,27 +57,28 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
-
+  
+  .glass-effect {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+  
   .neo-blur {
     @apply backdrop-blur-2xl bg-black/40 border border-white/10;
   }
   
   .text-gradient {
-    @apply bg-gradient-to-br from-white via-white/90 to-white/70 bg-clip-text text-transparent;
+    @apply bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent;
   }
   
   .glow-effect {
-    text-shadow: 0 0 10px rgba(168, 130, 255, 0.5), 0 0 20px rgba(168, 130, 255, 0.3);
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(168, 85, 247, 0.2);
   }
   
   .card-glow {
-    box-shadow: 0 0 15px rgba(168, 130, 255, 0.2);
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
   }
 }
 
 #root {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  text-align: left;
+  @apply max-w-full m-0 p-0 text-left;
 }
