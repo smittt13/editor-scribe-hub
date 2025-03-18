@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // First user is admin, others are regular users
-      const role = users.length === 0 ? 'admin' : 'user';
+      const role: 'admin' | 'user' = users.length === 0 ? 'admin' : 'user';
       
       const newUser = {
         id: crypto.randomUUID(),
