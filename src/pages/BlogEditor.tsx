@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBlogContext } from '@/context/BlogContext';
 import Layout from '@/components/Layout';
@@ -8,14 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Save, Eye, ArrowLeft } from 'lucide-react';
+import { Save, Eye, ArrowLeft, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
+import { useAutosave } from './Settings';
 
 const BlogEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getBlog, addBlog, updateBlog } = useBlogContext();
+  const { autosaveEnabled, autosaveInterval } = useAutosave();
   
   const [title, setTitle] = useState('');
   const [subTitle, setSubTitle] = useState('');
@@ -29,6 +31,10 @@ const BlogEditor = () => {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [editorData, setEditorData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  const autosaveTimerRef = useRef<number | null>(null);
+  const hasUnsavedChanges = useRef<boolean>(false);
 
   const isEditMode = !!id;
 
@@ -46,6 +52,8 @@ const BlogEditor = () => {
         setPriority(blog.priority);
         setStatus(blog.status);
         setEditorData(blog.content);
+        // Set last saved time to now when loading a saved blog
+        setLastSaved(new Date());
       } else {
         toast.error('Blog not found');
         navigate('/blogs');
@@ -58,6 +66,39 @@ const BlogEditor = () => {
       setSlug(title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
     }
   }, [title, isEditMode]);
+
+  // Mark content as changed when any field changes
+  useEffect(() => {
+    hasUnsavedChanges.current = true;
+  }, [title, subTitle, slug, authorName, authorImage, coverImage, tags, priority, status, editorData]);
+
+  // Setup autosave timer
+  useEffect(() => {
+    if (autosaveEnabled && isEditMode) {
+      // Clear existing timer if any
+      if (autosaveTimerRef.current !== null) {
+        window.clearInterval(autosaveTimerRef.current);
+      }
+      
+      // Set new timer
+      autosaveTimerRef.current = window.setInterval(() => {
+        if (hasUnsavedChanges.current) {
+          handleAutosave();
+        }
+      }, autosaveInterval * 1000);
+    } else if (autosaveTimerRef.current !== null) {
+      // Clear timer if autosave is disabled
+      window.clearInterval(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (autosaveTimerRef.current !== null) {
+        window.clearInterval(autosaveTimerRef.current);
+      }
+    };
+  }, [autosaveEnabled, autosaveInterval, isEditMode]);
 
   const handleEditorChange = (data: any) => {
     setEditorData(data);
@@ -72,6 +113,31 @@ const BlogEditor = () => {
 
   const handleTagRemove = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleAutosave = () => {
+    if (!isEditMode || !id || !title) return;
+    
+    const blogData = {
+      title,
+      sub_title: subTitle,
+      slug,
+      author_name: authorName,
+      author_image: authorImage,
+      cover_image: coverImage,
+      tags,
+      priority: priority !== undefined ? priority : undefined,
+      content: editorData,
+      status: status,
+    };
+
+    try {
+      updateBlog(id, blogData);
+      setLastSaved(new Date());
+      hasUnsavedChanges.current = false;
+    } catch (error) {
+      console.error('Autosave error:', error);
+    }
   };
 
   const handleSave = (newStatus: "draft" | "published" = status) => {
@@ -109,9 +175,13 @@ const BlogEditor = () => {
       if (isEditMode && id) {
         updateBlog(id, blogData);
         toast.success('Blog updated successfully');
+        setLastSaved(new Date());
+        hasUnsavedChanges.current = false;
       } else {
         const newBlog = addBlog(blogData);
         toast.success('Blog created successfully');
+        setLastSaved(new Date());
+        hasUnsavedChanges.current = false;
         // Navigate to edit mode with the new ID
         navigate(`/blogs/edit/${newBlog.id}`);
       }
@@ -143,9 +213,22 @@ const BlogEditor = () => {
           Back to Blogs
         </Button>
         
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          {isEditMode ? 'Edit Blog' : 'Create New Blog'}
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isEditMode ? 'Edit Blog' : 'Create New Blog'}
+          </h1>
+          
+          {isEditMode && autosaveEnabled && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Clock className="mr-1 h-4 w-4" />
+              {lastSaved ? (
+                <span>Last saved: {lastSaved.toLocaleTimeString()}</span>
+              ) : (
+                <span>Autosave enabled</span>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -308,6 +391,7 @@ const BlogEditor = () => {
               onClick={() => handleSave("draft")}
               disabled={isSaving}
             >
+              <Save className="mr-2 h-4 w-4" />
               Save as Draft
             </Button>
             <Button
@@ -315,7 +399,7 @@ const BlogEditor = () => {
               disabled={isSaving}
               className="bg-teal-600 hover:bg-teal-700"
             >
-              {isSaving ? 'Saving...' : 'Publish'}
+              {isSaving ? 'Publishing...' : 'Publish'}
             </Button>
           </div>
         </div>

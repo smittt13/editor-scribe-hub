@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +9,73 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Save, Upload, User, Key, Copy, RefreshCcw } from 'lucide-react';
+import { Save, Upload, User, Key, Copy, RefreshCcw, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Toggle } from '@/components/ui/toggle';
+
+export const AutosaveContext = React.createContext<{
+  autosaveEnabled: boolean;
+  setAutosaveEnabled: (enabled: boolean) => void;
+  autosaveInterval: number;
+  setAutosaveInterval: (interval: number) => void;
+}>({
+  autosaveEnabled: true,
+  setAutosaveEnabled: () => {},
+  autosaveInterval: 30,
+  setAutosaveInterval: () => {},
+});
+
+export const useAutosave = () => React.useContext(AutosaveContext);
+
+export const AutosaveProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [autosaveEnabled, setAutosaveEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('autosaveEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  
+  const [autosaveInterval, setAutosaveInterval] = useState<number>(() => {
+    const saved = localStorage.getItem('autosaveInterval');
+    return saved !== null ? JSON.parse(saved) : 30;
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('autosaveEnabled', JSON.stringify(autosaveEnabled));
+  }, [autosaveEnabled]);
+  
+  useEffect(() => {
+    localStorage.setItem('autosaveInterval', JSON.stringify(autosaveInterval));
+  }, [autosaveInterval]);
+  
+  return (
+    <AutosaveContext.Provider value={{
+      autosaveEnabled,
+      setAutosaveEnabled,
+      autosaveInterval,
+      setAutosaveInterval,
+    }}>
+      {children}
+    </AutosaveContext.Provider>
+  );
+};
 
 const Settings = () => {
   const { user, generateApiKey, regenerateApiKey } = useAuth();
+  const { autosaveEnabled, setAutosaveEnabled, autosaveInterval, setAutosaveInterval } = useAutosave();
   const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState(user?.username || '');
   const [email, setEmail] = useState(user?.email || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [tempInterval, setTempInterval] = useState(autosaveInterval.toString());
+  
+  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTempInterval(value);
+    
+    const parsedValue = parseInt(value, 10);
+    if (!isNaN(parsedValue) && parsedValue > 0) {
+      setAutosaveInterval(parsedValue);
+    }
+  };
 
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +116,8 @@ const Settings = () => {
     }
   };
 
+  const intervalOptions = [15, 30, 60, 120, 300];
+
   return (
     <Layout>
       <div className="flex flex-col gap-8">
@@ -73,6 +133,9 @@ const Settings = () => {
             </TabsTrigger>
             <TabsTrigger value="api" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               API Keys
+            </TabsTrigger>
+            <TabsTrigger value="editor" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Editor
             </TabsTrigger>
             <TabsTrigger value="account" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Account
@@ -234,6 +297,79 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
+          <TabsContent value="editor">
+            <Card className="border border-border bg-card shadow-sm card-glow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Clock className="mr-2 h-5 w-5 text-primary" />
+                  Editor Preferences
+                </CardTitle>
+                <CardDescription>
+                  Customize your blog editing experience
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Autosave</h3>
+                      <p className="text-sm text-muted-foreground">Automatically save your work while editing</p>
+                    </div>
+                    <Switch
+                      checked={autosaveEnabled}
+                      onCheckedChange={setAutosaveEnabled}
+                      aria-label="Toggle autosave"
+                    />
+                  </div>
+                  
+                  {autosaveEnabled && (
+                    <div className="space-y-3 pl-6 border-l-2 border-primary/20">
+                      <Label htmlFor="interval">Autosave interval (seconds)</Label>
+                      <div className="flex flex-col space-y-3">
+                        <Input
+                          id="interval"
+                          type="number"
+                          min="5"
+                          value={tempInterval}
+                          onChange={handleIntervalChange}
+                          className="w-full max-w-[180px]"
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {intervalOptions.map((interval) => (
+                            <Toggle
+                              key={interval}
+                              pressed={autosaveInterval === interval}
+                              onPressedChange={() => {
+                                setAutosaveInterval(interval);
+                                setTempInterval(interval.toString());
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              {interval}s
+                            </Toggle>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Your blog drafts will be automatically saved every {autosaveInterval} seconds while you type.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <Separator />
+                
+                <div className="rounded-md bg-secondary p-4">
+                  <h3 className="font-semibold">About Autosave</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    When enabled, your blog drafts will be automatically saved while you're editing, helping to prevent data loss in case of unexpected issues.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
           <TabsContent value="account">
             <Card className="border border-border bg-card shadow-sm card-glow">
               <CardHeader>
@@ -272,3 +408,5 @@ const Settings = () => {
 };
 
 export default Settings;
+export { AutosaveProvider };
+

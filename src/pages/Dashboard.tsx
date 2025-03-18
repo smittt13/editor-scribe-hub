@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FileText, BookOpen, FileEdit, Rss, BarChart2, Clock, Calendar } from 'lucide-react';
+import { PlusCircle, FileText, BookOpen, FileEdit, Rss, BarChart2, Clock, Calendar, Upload } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from 'recharts';
@@ -19,6 +19,7 @@ const Dashboard = () => {
   const publishedBlogs = blogs.filter(blog => blog.status === "published").length;
   const draftBlogs = blogs.filter(blog => blog.status === "draft").length;
   const totalBlogs = blogs.length;
+  const requestCount = user?.requestCount || 0;
   
   // Chart data
   const chartData = useMemo(() => {
@@ -70,7 +71,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats overview */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="border border-border bg-card shadow-sm hover:shadow-md transition-shadow card-glow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Blogs</CardTitle>
@@ -99,6 +100,16 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-3xl font-bold">{draftBlogs}</div>
               <p className="text-xs text-muted-foreground mt-1">Blogs in progress, not yet published</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-border bg-card shadow-sm hover:shadow-md transition-shadow card-glow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">API Requests</CardTitle>
+              <Upload className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{requestCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">Total API requests made</p>
             </CardContent>
           </Card>
         </div>

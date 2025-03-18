@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useBlogContext, Blog } from '@/context/BlogContext';
+import { useAuth } from '@/context/AuthContext';
 
 const Api = () => {
   const [searchParams] = useSearchParams();
   const { validateApiKey, getPublishedBlogs } = useBlogContext();
+  const { incrementRequestCount } = useAuth();
   const [response, setResponse] = useState<{ success: boolean; data?: Blog[]; error?: string }>({
     success: false
   });
@@ -31,6 +33,9 @@ const Api = () => {
       return;
     }
     
+    // Increment request count
+    incrementRequestCount();
+    
     // Get all published blogs
     const publishedBlogs = getPublishedBlogs();
     
@@ -38,7 +43,7 @@ const Api = () => {
       success: true,
       data: publishedBlogs
     });
-  }, [searchParams, validateApiKey, getPublishedBlogs]);
+  }, [searchParams, validateApiKey, getPublishedBlogs, incrementRequestCount]);
 
   return (
     <pre className="bg-black text-white p-4 min-h-screen overflow-auto">

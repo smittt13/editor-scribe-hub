@@ -10,6 +10,7 @@ interface User {
   avatar?: string;
   apiKey?: string;
   role?: 'admin' | 'user';
+  requestCount?: number;
 }
 
 interface AuthContextType {
@@ -21,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   generateApiKey: () => string;
   regenerateApiKey: () => string;
+  incrementRequestCount: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +74,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const regenerateApiKey = (): string => {
     return generateApiKey();
+  };
+
+  const incrementRequestCount = () => {
+    if (user) {
+      const currentCount = user.requestCount || 0;
+      const newCount = currentCount + 1;
+      
+      // Update local user state
+      const updatedUser = { ...user, requestCount: newCount };
+      setUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update the user in the users array
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const updatedUsers = users.map((u: any) => 
+        u.id === user.id ? { ...u, requestCount: newCount } : u
+      );
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -126,7 +149,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password, // In a real app, this would be hashed
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
         role,
-        apiKey: role === 'admin' ? crypto.randomUUID() : undefined
+        apiKey: role === 'admin' ? crypto.randomUUID() : undefined,
+        requestCount: 0
       };
       
       users.push(newUser);
@@ -163,7 +187,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signup, 
       logout,
       generateApiKey,
-      regenerateApiKey
+      regenerateApiKey,
+      incrementRequestCount
     }}>
       {children}
     </AuthContext.Provider>

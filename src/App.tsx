@@ -1,151 +1,92 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { BlogProvider } from "./context/BlogContext";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Dashboard from "./pages/Dashboard";
-import BlogEditor from "./pages/BlogEditor";
-import BlogList from "./pages/BlogList";
-import BlogPreview from "./pages/BlogPreview";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Api from "./pages/Api";
-import React from "react";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
+
+// Pages
+import Index from './pages/Index';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import BlogList from './pages/BlogList';
+import BlogEditor from './pages/BlogEditor';
+import BlogPreview from './pages/BlogPreview';
+import Settings from './pages/Settings';
+import Api from './pages/Api';
+import NotFound from './pages/NotFound';
+
+// Context
+import { AuthProvider } from './context/AuthContext';
+import { BlogProvider } from './context/BlogContext';
+import { AutosaveProvider } from './pages/Settings';
+
+// Auth guard component
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const userExists = localStorage.getItem('user');
+  if (!userExists) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
 
 const queryClient = new QueryClient();
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gradient glow-effect">Loading...</h1>
-      </div>
-    </div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-// Admin route component
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gradient glow-effect">Loading...</h1>
-      </div>
-    </div>;
-  }
-  
-  if (!user || user.role !== 'admin') {
-    return <Navigate to="/blogs" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-// Public routes that redirect to dashboard if already logged in
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gradient glow-effect">Loading...</h1>
-      </div>
-    </div>;
-  }
-  
-  if (isAuthenticated) {
-    return <Navigate to="/blogs" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-const AppRoutes = () => {
+function App() {
   return (
-    <Routes>
-      {/* API route (public but requires API key) */}
-      <Route path="/api/blogs" element={<Api />} />
-      
-      {/* Public routes */}
-      <Route path="/login" element={
-        <PublicRoute>
-          <Login />
-        </PublicRoute>
-      } />
-      <Route path="/signup" element={
-        <PublicRoute>
-          <Signup />
-        </PublicRoute>
-      } />
-      
-      {/* Protected routes */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/blogs" element={
-        <ProtectedRoute>
-          <BlogList />
-        </ProtectedRoute>
-      } />
-      <Route path="/blogs/new" element={
-        <ProtectedRoute>
-          <BlogEditor />
-        </ProtectedRoute>
-      } />
-      <Route path="/blogs/edit/:id" element={
-        <ProtectedRoute>
-          <BlogEditor />
-        </ProtectedRoute>
-      } />
-      <Route path="/blogs/preview/:id" element={
-        <ProtectedRoute>
-          <BlogPreview />
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Settings />
-        </ProtectedRoute>
-      } />
-      
-      {/* Catch-all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <AuthProvider>
           <BlogProvider>
-            <AppRoutes />
+            <AutosaveProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/api" element={<Api />} />
+                
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                } />
+                <Route path="/blogs" element={
+                  <PrivateRoute>
+                    <BlogList />
+                  </PrivateRoute>
+                } />
+                <Route path="/blogs/new" element={
+                  <PrivateRoute>
+                    <BlogEditor />
+                  </PrivateRoute>
+                } />
+                <Route path="/blogs/edit/:id" element={
+                  <PrivateRoute>
+                    <BlogEditor />
+                  </PrivateRoute>
+                } />
+                <Route path="/blogs/preview/:id" element={
+                  <PrivateRoute>
+                    <BlogPreview />
+                  </PrivateRoute>
+                } />
+                <Route path="/settings" element={
+                  <PrivateRoute>
+                    <Settings />
+                  </PrivateRoute>
+                } />
+                
+                {/* 404 route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster position="top-right" />
+            </AutosaveProvider>
           </BlogProvider>
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
