@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Info } from 'lucide-react';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -20,11 +21,31 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/blogs');
+    }
+    
+    // Ensure default admin is created
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    if (users.length === 0) {
+      const defaultAdmin = {
+        id: crypto.randomUUID(),
+        username: 'admin',
+        email: 'admin@example.com',
+        password: 'admin123',
+        avatar: `https://ui-avatars.com/api/?name=admin&background=random`,
+        role: 'admin',
+        apiKey: crypto.randomUUID(),
+        requestCount: 0
+      };
+      
+      users.push(defaultAdmin);
+      localStorage.setItem('users', JSON.stringify(users));
+      toast.success('Default admin account created');
     }
   }, [isAuthenticated, navigate]);
 
@@ -38,10 +59,16 @@ const Login = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setLoginError('');
+    
     try {
-      await login(values.email, values.password);
+      const success = await login(values.email, values.password);
+      if (!success) {
+        setLoginError('Invalid email or password. Please try again.');
+      }
     } catch (error) {
       console.error('Login error:', error);
+      setLoginError('An error occurred during login.');
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +121,11 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
+                
+                {loginError && (
+                  <div className="text-sm font-medium text-destructive">{loginError}</div>
+                )}
+                
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
