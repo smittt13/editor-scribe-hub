@@ -35,27 +35,39 @@ export const useAuth = () => {
   return context;
 };
 
-// Create a default admin user
-const createDefaultAdmin = () => {
-  const users = JSON.parse(localStorage.getItem('users') || '[]');
-  
-  // Only create default admin if no users exist
-  if (users.length === 0) {
-    const defaultAdmin = {
-      id: crypto.randomUUID(),
-      username: 'admin',
-      email: 'admin@example.com',
-      password: 'admin123', // In a real app, this would be hashed
-      avatar: `https://ui-avatars.com/api/?name=admin&background=random`,
-      role: 'admin',
-      apiKey: crypto.randomUUID(),
-      requestCount: 0
-    };
+// Default admin user data
+const DEFAULT_ADMIN = {
+  id: "admin-id-1234",
+  username: 'admin',
+  email: 'admin@example.com',
+  password: 'admin123',
+  avatar: `https://ui-avatars.com/api/?name=admin&background=random`,
+  role: 'admin' as const,
+  apiKey: "default-api-key-12345",
+  requestCount: 0
+};
+
+// Create default admin user if none exists
+const ensureDefaultAdminExists = () => {
+  try {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
     
-    users.push(defaultAdmin);
-    localStorage.setItem('users', JSON.stringify(users));
+    // Check if admin user already exists
+    const adminExists = users.some((user: any) => 
+      user.email === DEFAULT_ADMIN.email || user.username === DEFAULT_ADMIN.username
+    );
     
-    toast.success('Default admin account created: admin@example.com / admin123');
+    if (!adminExists && users.length === 0) {
+      users.push(DEFAULT_ADMIN);
+      localStorage.setItem('users', JSON.stringify(users));
+      console.log('Default admin account created');
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error ensuring default admin exists:', error);
+    return false;
   }
 };
 
@@ -65,8 +77,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Create default admin account
-    createDefaultAdmin();
+    // Create default admin account if needed
+    const adminCreated = ensureDefaultAdminExists();
+    if (adminCreated) {
+      toast.success('Default admin account created: admin@example.com / admin123');
+    }
     
     // Check if user is stored in localStorage
     const storedUser = localStorage.getItem('user');
@@ -126,9 +141,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // In a real app, this would be an API call
-      // For demo, we'll simulate authentication with sample users
+      // Ensure default admin exists
+      ensureDefaultAdminExists();
+      
+      // Get users from localStorage
       const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Debug the login attempt
+      console.log(`Attempting login with email: ${email}`);
+      console.log(`Users in localStorage:`, users);
+      
+      // Check if user exists and password matches
       const foundUser = users.find((u: any) => 
         u.email === email && u.password === password
       );
@@ -156,8 +179,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (username: string, email: string, password: string): Promise<boolean> => {
     try {
-      // In a real app, this would be an API call
-      // For demo, we'll simulate user registration
+      // Ensure default admin exists
+      ensureDefaultAdminExists();
+      
+      // Get users from localStorage
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       
       // Check if email already exists

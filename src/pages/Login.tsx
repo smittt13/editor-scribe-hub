@@ -28,25 +28,6 @@ const Login = () => {
     if (isAuthenticated) {
       navigate('/blogs');
     }
-    
-    // Ensure default admin is created
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    if (users.length === 0) {
-      const defaultAdmin = {
-        id: crypto.randomUUID(),
-        username: 'admin',
-        email: 'admin@example.com',
-        password: 'admin123',
-        avatar: `https://ui-avatars.com/api/?name=admin&background=random`,
-        role: 'admin',
-        apiKey: crypto.randomUUID(),
-        requestCount: 0
-      };
-      
-      users.push(defaultAdmin);
-      localStorage.setItem('users', JSON.stringify(users));
-      toast.success('Default admin account created');
-    }
   }, [isAuthenticated, navigate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -62,6 +43,7 @@ const Login = () => {
     setLoginError('');
     
     try {
+      console.log(`Attempting to login with:`, values);
       const success = await login(values.email, values.password);
       if (!success) {
         setLoginError('Invalid email or password. Please try again.');
