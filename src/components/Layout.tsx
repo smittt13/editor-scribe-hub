@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut, 
   User,
-  PenSquare
+  PenSquare,
+  ShieldAlert
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Blogs', href: '/blogs', icon: FileText },
     { name: 'New Blog', href: '/blogs/new', icon: Plus },
   ];
+  
+  // Add admin item if user is admin
+  const isAdmin = user?.role === 'admin';
   
   const handleLogout = () => {
     logout();
@@ -65,6 +69,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <div className="ml-3">
                     <p className="text-sm font-medium text-foreground">{user.username}</p>
                     <p className="text-xs text-muted-foreground truncate max-w-[160px]">{user.email}</p>
+                    {isAdmin && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary text-primary-foreground mt-1">
+                        Admin
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -96,6 +105,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       </Link>
                     );
                   })}
+                  
+                  {/* Admin Panel Link - only show if user is admin */}
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className={cn(
+                        "group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200",
+                        location.pathname === '/admin'
+                          ? "bg-primary text-primary-foreground shadow-lg"
+                          : "text-foreground hover:text-primary hover:bg-secondary"
+                      )}
+                    >
+                      <ShieldAlert
+                        className={cn(
+                          "mr-3 flex-shrink-0 h-5 w-5",
+                          location.pathname === '/admin' ? "text-primary-foreground" : "text-foreground group-hover:text-primary"
+                        )}
+                        aria-hidden="true"
+                      />
+                      Admin Panel
+                    </Link>
+                  )}
                 </nav>
 
                 <div className="mt-auto pb-6 space-y-2">
@@ -179,6 +210,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               );
             })}
+            
+            {/* Admin icon for mobile - only show if user is admin */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={cn(
+                  "flex flex-col items-center py-1 px-3",
+                  location.pathname === '/admin' ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <ShieldAlert className="h-5 w-5" />
+                <span className="text-xs mt-1">Admin</span>
+              </Link>
+            )}
+            
             <Button
               variant="ghost"
               size="sm"

@@ -35,12 +35,39 @@ export const useAuth = () => {
   return context;
 };
 
+// Create a default admin user
+const createDefaultAdmin = () => {
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  
+  // Only create default admin if no users exist
+  if (users.length === 0) {
+    const defaultAdmin = {
+      id: crypto.randomUUID(),
+      username: 'admin',
+      email: 'admin@example.com',
+      password: 'admin123', // In a real app, this would be hashed
+      avatar: `https://ui-avatars.com/api/?name=admin&background=random`,
+      role: 'admin',
+      apiKey: crypto.randomUUID(),
+      requestCount: 0
+    };
+    
+    users.push(defaultAdmin);
+    localStorage.setItem('users', JSON.stringify(users));
+    
+    toast.success('Default admin account created: admin@example.com / admin123');
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Create default admin account
+    createDefaultAdmin();
+    
     // Check if user is stored in localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
